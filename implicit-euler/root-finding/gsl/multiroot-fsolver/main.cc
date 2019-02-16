@@ -27,7 +27,7 @@ int rosenbrock_f (const gsl_vector *x, void *params, gsl_vector *f)
 }
 
 void print_state(size_t i_iter, gsl_multiroot_fsolver *s) {
-  printf("[ i_iter = %03lu ] x = % .3f % .3f / f(x) = % .3e % .3e\n",
+  printf("[ i_iter = %03lu ] x = %7.3f %7.3f / f(x) = %10.3e %10.3e\n",
       i_iter, 
       gsl_vector_get(s->x,0), gsl_vector_get(s->x,1),
       gsl_vector_get(s->f,0), gsl_vector_get(s->f,1));
@@ -52,13 +52,25 @@ int main(int argc, char *argv[]) {
   
   
   //// Iterate
+  int iter_status, resi_status;
   size_t i_iter = 0;
   print_state(i_iter, s); 
+  do 
+  {
+    i_iter++;
+    iter_status = gsl_multiroot_fsolver_iterate(s);
+    print_state(i_iter, s);
+    if (iter_status != 0) { break; } // check if the solver is stuck
+    resi_status = gsl_multiroot_test_residual(s->f, 1e-7);
+  }
+  while (resi_status == GSL_CONTINUE && i_iter < 1000);
+  printf("residual status = %s\n", gsl_strerror(resi_status));
 
 
   //// Deallocate
   gsl_multiroot_fsolver_free(s);
   gsl_vector_free(x);
+
 
   return EXIT_SUCCESS;
 }
